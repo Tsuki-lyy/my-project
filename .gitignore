@@ -1,0 +1,11 @@
+# Temporary files
+*.tmp
+
+# Executables
+*.exe
+
+# HTML files
+index.html
+
+# PHP files
+test.php
