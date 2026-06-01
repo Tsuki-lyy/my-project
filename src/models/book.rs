@@ -5,6 +5,8 @@ pub struct Book {
     author: String,
     publisher: String,
     available: bool,
+    // develop 分支新增的字段
+    description: String,
 }
 
 impl Book {
@@ -15,6 +17,7 @@ impl Book {
             author,
             publisher,
             available: true,
+            description: "".to_string(),
         }
     }
 
