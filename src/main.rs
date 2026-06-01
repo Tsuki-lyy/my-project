@@ -3,7 +3,7 @@ use std::error::Error;
 mod models;
 mod services;
 
-use models::{Student, Book, BorrowRecord};
+use models::{Student, Book, BookCategory, BorrowRecord};
 use services::{UserService, BookService, BorrowService};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -27,6 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "Rust程序设计".to_string(),
         "Steve Klabnik".to_string(),
         "人民邮电出版社".to_string(),
+        BookCategory::Technology,
     );
     book_service.add_book(book1);
     
@@ -35,6 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "数据结构与算法".to_string(),
         "Robert Sedgewick".to_string(),
         "清华大学出版社".to_string(),
+        BookCategory::Science,
     );
     book_service.add_book(book2);
     
