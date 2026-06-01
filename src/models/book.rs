@@ -16,6 +16,7 @@ pub struct Book {
     publisher: String,
     category: BookCategory,
     available: bool,
+    description: String,
 }
 
 impl Book {
@@ -27,6 +28,7 @@ impl Book {
             publisher,
             category,
             available: true,
+            description: "".to_string(),
         }
     }
 
