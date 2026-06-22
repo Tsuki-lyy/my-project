@@ -112,11 +112,35 @@ impl Parser {
         } else {
             None
         };
+        let mut limit = None;
+        let mut offset = None;
+        if matches!(self.peek_kind(), TokenKind::Keyword(Keyword::Limit)) {
+            self.pos += 1;
+            limit = Some(self.expect_u64()?);
+        }
+        if matches!(self.peek_kind(), TokenKind::Keyword(Keyword::Offset)) {
+            self.pos += 1;
+            offset = Some(self.expect_u64()?);
+        }
         self.consume_optional_semicolon();
         Ok(Statement::Select {
             table,
             where_clause,
+            limit,
+            offset,
         })
+    }
+
+    fn expect_u64(&mut self) -> Result<u64> {
+        match self.peek_kind() {
+            TokenKind::Int(n) => {
+                let v = u64::try_from(n)
+                    .map_err(|_| Error::Parse(format!("limit/offset out of range: {n}")))?;
+                self.pos += 1;
+                Ok(v)
+            }
+            other => Err(Error::Parse(format!("expected integer, got {other:?}"))),
+        }
     }
 
     fn parse_update(&mut self) -> Result<Statement> {
@@ -336,9 +360,13 @@ mod tests {
             Statement::Select {
                 table,
                 where_clause,
+                limit,
+                offset,
             } => {
                 assert_eq!(table, "users");
                 assert!(where_clause.is_some());
+                assert!(limit.is_none());
+                assert!(offset.is_none());
             }
             _ => panic!("wrong stmt"),
         }

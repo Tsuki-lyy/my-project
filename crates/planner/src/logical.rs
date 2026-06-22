@@ -37,6 +37,11 @@ pub enum LogicalPlan {
         input: Box<LogicalPlan>,
         predicate: sqlrustgo_parser::Expr,
     },
+    Limit {
+        input: Box<LogicalPlan>,
+        limit: u64,
+        offset: u64,
+    },
 }
 
 pub struct Planner;
@@ -63,11 +68,20 @@ impl Planner {
             Statement::Select {
                 table,
                 where_clause,
+                limit,
+                offset,
             } => {
-                let plan = LogicalPlan::Scan {
+                let mut plan = LogicalPlan::Scan {
                     table,
                     filter: where_clause,
                 };
+                if limit.is_some() || offset.is_some() {
+                    plan = LogicalPlan::Limit {
+                        input: Box::new(plan),
+                        limit: limit.unwrap_or(0),
+                        offset: offset.unwrap_or(0),
+                    };
+                }
                 Ok(PhysicalPlan::Project {
                     input: Box::new(plan),
                 })

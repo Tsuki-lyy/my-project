@@ -66,6 +66,20 @@ impl Executor {
                     .filter(|row| eval_expr(predicate, row))
                     .collect())
             }
+            LogicalPlan::Limit {
+                input,
+                limit,
+                offset,
+            } => {
+                let rows = self.execute_logical(input)?;
+                let start = (*offset as usize).min(rows.len());
+                let end = if *limit == 0 {
+                    rows.len()
+                } else {
+                    (start + *limit as usize).min(rows.len())
+                };
+                Ok(rows[start..end].to_vec())
+            }
             _ => Err(Error::Execution("unsupported logical plan".into())),
         }
     }

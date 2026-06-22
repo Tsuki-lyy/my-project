@@ -13,6 +13,7 @@ pub struct MemoryStorage {
 
 #[derive(Debug, Default)]
 struct Table {
+    #[allow(dead_code)]
     columns: Vec<(String, String)>,
     rows: Vec<Vec<Value>>,
 }

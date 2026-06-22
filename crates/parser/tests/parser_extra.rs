@@ -42,9 +42,52 @@ fn parse_select_with_where_and_comparison() {
         Statement::Select {
             table,
             where_clause,
+            limit,
+            offset,
         } => {
             assert_eq!(table, "users");
             assert!(where_clause.is_some());
+            assert!(limit.is_none());
+            assert!(offset.is_none());
+        }
+        _ => panic!("expected Select"),
+    }
+}
+
+#[test]
+fn parse_select_with_limit() {
+    let mut p = Parser::new("SELECT * FROM users LIMIT 10;");
+    let s = p.parse().expect("parse");
+    match s {
+        Statement::Select { limit, offset, .. } => {
+            assert_eq!(limit, Some(10));
+            assert_eq!(offset, None);
+        }
+        _ => panic!("expected Select"),
+    }
+}
+
+#[test]
+fn parse_select_with_limit_and_offset() {
+    let mut p = Parser::new("SELECT * FROM users LIMIT 10 OFFSET 20;");
+    let s = p.parse().expect("parse");
+    match s {
+        Statement::Select { limit, offset, .. } => {
+            assert_eq!(limit, Some(10));
+            assert_eq!(offset, Some(20));
+        }
+        _ => panic!("expected Select"),
+    }
+}
+
+#[test]
+fn parse_select_with_offset_only() {
+    let mut p = Parser::new("SELECT * FROM users OFFSET 5;");
+    let s = p.parse().expect("parse");
+    match s {
+        Statement::Select { limit, offset, .. } => {
+            assert_eq!(limit, None);
+            assert_eq!(offset, Some(5));
         }
         _ => panic!("expected Select"),
     }
