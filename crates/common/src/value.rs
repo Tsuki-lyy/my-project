@@ -2,7 +2,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Null,
     Bool(bool),
@@ -24,17 +24,15 @@ impl Value {
     }
 }
 
-impl Eq for Value {}
-
-impl Ord for Value {
-    fn cmp(&self, other: &Self) -> Ordering {
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
-            (Value::Null, Value::Null) => Ordering::Equal,
-            (Value::Int(a), Value::Int(b)) => a.cmp(b),
-            (Value::Float(a), Value::Float(b)) => a.partial_cmp(b).unwrap_or(Ordering::Equal),
-            (Value::Bool(a), Value::Bool(b)) => a.cmp(b),
-            (Value::Text(a), Value::Text(b)) => a.cmp(b),
-            _ => self.rank().cmp(&other.rank()),
+            (Value::Null, Value::Null) => Some(Ordering::Equal),
+            (Value::Int(a), Value::Int(b)) => Some(a.cmp(b)),
+            (Value::Float(a), Value::Float(b)) => a.partial_cmp(b),
+            (Value::Bool(a), Value::Bool(b)) => Some(a.cmp(b)),
+            (Value::Text(a), Value::Text(b)) => Some(a.cmp(b)),
+            _ => Some(self.rank().cmp(&other.rank())),
         }
     }
 }

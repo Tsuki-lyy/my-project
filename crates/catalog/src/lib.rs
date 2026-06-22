@@ -8,7 +8,9 @@ pub struct Catalog {
 
 impl Catalog {
     pub fn new() -> Self {
-        Self { tables: RwLock::new(HashMap::new()) }
+        Self {
+            tables: RwLock::new(HashMap::new()),
+        }
     }
 
     pub fn create_table(&self, name: &str, columns: Vec<(String, String)>) {
@@ -31,7 +33,9 @@ impl Catalog {
 }
 
 impl Default for Catalog {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]

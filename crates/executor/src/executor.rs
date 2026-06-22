@@ -31,8 +31,14 @@ impl Executor {
                 self.storage.insert(table, values.clone())?;
                 Ok(vec![])
             }
-            PhysicalPlan::Update { table, assignments, filter } => {
-                let count = self.storage.update(table, assignments.clone(), filter.as_ref())?;
+            PhysicalPlan::Update {
+                table,
+                assignments,
+                filter,
+            } => {
+                let count = self
+                    .storage
+                    .update(table, assignments.clone(), filter.as_ref())?;
                 Ok(vec![vec![Value::Int(count as i64)]])
             }
             PhysicalPlan::Delete { table, filter } => {

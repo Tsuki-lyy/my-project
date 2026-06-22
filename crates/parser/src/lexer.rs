@@ -12,6 +12,7 @@ pub enum TokenKind {
     Keyword(Keyword),
     Ident,
     Int(i64),
+    Float(f64),
     Text(String),
     Symbol(char),
     Eof,
@@ -49,7 +50,10 @@ pub struct Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
-        Self { input: input.as_bytes(), pos: 0 }
+        Self {
+            input: input.as_bytes(),
+            pos: 0,
+        }
     }
 
     pub fn tokenize(mut self) -> Result<Vec<Token>> {
@@ -82,11 +86,16 @@ impl<'a> Lexer<'a> {
             }
             return Err(Error::Lexer(format!("unexpected char `{}`", c as char)));
         }
-        out.push(Token { kind: TokenKind::Eof, lexeme: "".into() });
+        out.push(Token {
+            kind: TokenKind::Eof,
+            lexeme: "".into(),
+        });
         Ok(out)
     }
 
-    fn peek(&self) -> u8 { self.input[self.pos] }
+    fn peek(&self) -> u8 {
+        self.input[self.pos]
+    }
 
     fn read_ident_or_keyword(&mut self) -> Result<Token> {
         let start = self.pos;
@@ -130,11 +139,38 @@ impl<'a> Lexer<'a> {
         while self.pos < self.input.len() && self.input[self.pos].is_ascii_digit() {
             self.pos += 1;
         }
-        let n: i64 = std::str::from_utf8(&self.input[start..self.pos])
-            .map_err(|_| Error::Lexer("invalid utf-8".into()))?
-            .parse()
-            .map_err(|e: std::num::ParseIntError| Error::Lexer(e.to_string()))?;
-        Ok(Token { kind: TokenKind::Int(n), lexeme: n.to_string() })
+        // 浮点：遇到 . 继续读
+        let mut is_float = false;
+        if self.pos < self.input.len()
+            && self.input[self.pos] == b'.'
+            && self.pos + 1 < self.input.len()
+            && self.input[self.pos + 1].is_ascii_digit()
+        {
+            is_float = true;
+            self.pos += 1; // 跳过 .
+            while self.pos < self.input.len() && self.input[self.pos].is_ascii_digit() {
+                self.pos += 1;
+            }
+        }
+        let lex = std::str::from_utf8(&self.input[start..self.pos])
+            .map_err(|_| Error::Lexer("invalid utf-8".into()))?;
+        if is_float {
+            let v: f64 = lex
+                .parse()
+                .map_err(|e: std::num::ParseFloatError| Error::Lexer(e.to_string()))?;
+            Ok(Token {
+                kind: TokenKind::Float(v),
+                lexeme: lex.to_string(),
+            })
+        } else {
+            let n: i64 = lex
+                .parse()
+                .map_err(|e: std::num::ParseIntError| Error::Lexer(e.to_string()))?;
+            Ok(Token {
+                kind: TokenKind::Int(n),
+                lexeme: n.to_string(),
+            })
+        }
     }
 
     fn read_string(&mut self) -> Result<Token> {
@@ -150,11 +186,17 @@ impl<'a> Lexer<'a> {
             .map_err(|_| Error::Lexer("invalid utf-8".into()))?
             .to_string();
         self.pos += 1; // 跳过闭 '
-        Ok(Token { kind: TokenKind::Text(s.clone()), lexeme: format!("'{s}'") })
+        Ok(Token {
+            kind: TokenKind::Text(s.clone()),
+            lexeme: format!("'{s}'"),
+        })
     }
 
     fn is_symbol(c: u8) -> bool {
-        matches!(c, b'(' | b')' | b',' | b'*' | b'=' | b'<' | b'>' | b';')
+        matches!(
+            c,
+            b'(' | b')' | b',' | b'*' | b'=' | b'<' | b'>' | b';' | b'-' | b'+'
+        )
     }
 }
 

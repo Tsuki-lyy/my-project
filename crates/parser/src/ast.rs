@@ -47,7 +47,11 @@ pub enum DataType {
 pub enum Expr {
     Literal(Value),
     Column(String),
-    Binary { left: Box<Expr>, op: BinOp, right: Box<Expr> },
+    Binary {
+        left: Box<Expr>,
+        op: BinOp,
+        right: Box<Expr>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]

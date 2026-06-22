@@ -15,7 +15,10 @@ impl Parser {
             Ok(t) => t,
             Err(e) => {
                 eprintln!("lex error: {e}");
-                vec![Token { kind: TokenKind::Eof, lexeme: String::new() }]
+                vec![Token {
+                    kind: TokenKind::Eof,
+                    lexeme: String::new(),
+                }]
             }
         };
         Self { tokens, pos: 0 }
@@ -55,7 +58,10 @@ impl Parser {
         loop {
             let col_name = self.expect_ident()?;
             let ty = self.parse_type()?;
-            columns.push(ColumnDef { name: col_name, data_type: ty });
+            columns.push(ColumnDef {
+                name: col_name,
+                data_type: ty,
+            });
             if matches!(self.peek_kind(), TokenKind::Symbol(',')) {
                 self.pos += 1;
             } else {
@@ -107,7 +113,10 @@ impl Parser {
             None
         };
         self.consume_optional_semicolon();
-        Ok(Statement::Select { table, where_clause })
+        Ok(Statement::Select {
+            table,
+            where_clause,
+        })
     }
 
     fn parse_update(&mut self) -> Result<Statement> {
@@ -133,7 +142,11 @@ impl Parser {
             None
         };
         self.consume_optional_semicolon();
-        Ok(Statement::Update { table, assignments, where_clause })
+        Ok(Statement::Update {
+            table,
+            assignments,
+            where_clause,
+        })
     }
 
     fn parse_delete(&mut self) -> Result<Statement> {
@@ -147,26 +160,60 @@ impl Parser {
             None
         };
         self.consume_optional_semicolon();
-        Ok(Statement::Delete { table, where_clause })
+        Ok(Statement::Delete {
+            table,
+            where_clause,
+        })
     }
 
     fn parse_type(&mut self) -> Result<DataType> {
         match self.peek_kind() {
-            TokenKind::Keyword(Keyword::Int) => { self.pos += 1; Ok(DataType::Int) }
-            TokenKind::Keyword(Keyword::Float) => { self.pos += 1; Ok(DataType::Float) }
-            TokenKind::Keyword(Keyword::Text) => { self.pos += 1; Ok(DataType::Text) }
-            TokenKind::Keyword(Keyword::Bool) => { self.pos += 1; Ok(DataType::Bool) }
+            TokenKind::Keyword(Keyword::Int) => {
+                self.pos += 1;
+                Ok(DataType::Int)
+            }
+            TokenKind::Keyword(Keyword::Float) => {
+                self.pos += 1;
+                Ok(DataType::Float)
+            }
+            TokenKind::Keyword(Keyword::Text) => {
+                self.pos += 1;
+                Ok(DataType::Text)
+            }
+            TokenKind::Keyword(Keyword::Bool) => {
+                self.pos += 1;
+                Ok(DataType::Bool)
+            }
             _ => Err(Error::Parse("expected type".into())),
         }
     }
 
     fn parse_value(&mut self) -> Result<Value> {
         match self.peek_kind() {
-            TokenKind::Int(n) => { self.pos += 1; Ok(Value::Int(n)) }
-            TokenKind::Text(s) => { self.pos += 1; Ok(Value::Text(s)) }
-            TokenKind::Keyword(Keyword::True) => { self.pos += 1; Ok(Value::Bool(true)) }
-            TokenKind::Keyword(Keyword::False) => { self.pos += 1; Ok(Value::Bool(false)) }
-            TokenKind::Keyword(Keyword::Null) => { self.pos += 1; Ok(Value::Null) }
+            TokenKind::Int(n) => {
+                self.pos += 1;
+                Ok(Value::Int(n))
+            }
+            TokenKind::Float(f) => {
+                self.pos += 1;
+                Ok(Value::Float(f))
+            }
+            TokenKind::Text(s) => {
+                self.pos += 1;
+                Ok(Value::Text(s))
+            }
+            TokenKind::Keyword(Keyword::True) => {
+                self.pos += 1;
+                Ok(Value::Bool(true))
+            }
+            TokenKind::Keyword(Keyword::False) => {
+                self.pos += 1;
+                Ok(Value::Bool(false))
+            }
+            TokenKind::Keyword(Keyword::Null) => {
+                self.pos += 1;
+                Ok(Value::Null)
+            }
             _ => Err(Error::Parse("expected literal".into())),
         }
     }
@@ -178,17 +225,28 @@ impl Parser {
 
     fn parse_primary_expr(&mut self) -> Result<Expr> {
         match self.peek_kind() {
-            TokenKind::Int(n) => { self.pos += 1; Ok(Expr::Literal(Value::Int(n))) }
-            TokenKind::Text(s) => { self.pos += 1; Ok(Expr::Literal(Value::Text(s))) }
+            TokenKind::Int(n) => {
+                self.pos += 1;
+                Ok(Expr::Literal(Value::Int(n)))
+            }
+            TokenKind::Float(f) => {
+                self.pos += 1;
+                Ok(Expr::Literal(Value::Float(f)))
+            }
+            TokenKind::Text(s) => {
+                self.pos += 1;
+                Ok(Expr::Literal(Value::Text(s)))
+            }
             TokenKind::Ident => {
                 let name = match &self.tokens[self.pos].kind {
                     TokenKind::Ident => self.tokens[self.pos].lexeme.clone(),
                     _ => unreachable!(),
                 };
                 self.pos += 1;
-                if matches!(self.peek_kind(), TokenKind::Symbol('=')
-                    | TokenKind::Symbol('<') | TokenKind::Symbol('>'))
-                {
+                if matches!(
+                    self.peek_kind(),
+                    TokenKind::Symbol('=') | TokenKind::Symbol('<') | TokenKind::Symbol('>')
+                ) {
                     let op = match self.peek_kind() {
                         TokenKind::Symbol('=') => BinOp::Eq,
                         TokenKind::Symbol('<') => BinOp::Lt,
@@ -210,7 +268,9 @@ impl Parser {
         }
     }
 
-    fn peek_kind(&self) -> TokenKind { self.tokens[self.pos].kind.clone() }
+    fn peek_kind(&self) -> TokenKind {
+        self.tokens[self.pos].kind.clone()
+    }
 
     fn expect_keyword(&mut self, kw: Keyword) -> Result<()> {
         if matches!(self.peek_kind(), TokenKind::Keyword(ref k) if k == &kw) {
@@ -273,7 +333,10 @@ mod tests {
         let mut p = Parser::new("SELECT * FROM users WHERE id = 1;");
         let s = p.parse().unwrap();
         match s {
-            Statement::Select { table, where_clause } => {
+            Statement::Select {
+                table,
+                where_clause,
+            } => {
                 assert_eq!(table, "users");
                 assert!(where_clause.is_some());
             }
