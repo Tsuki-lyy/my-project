@@ -80,6 +80,22 @@ impl Executor {
                 };
                 Ok(rows[start..end].to_vec())
             }
+            LogicalPlan::OrderBy {
+                input,
+                column,
+                desc,
+            } => {
+                let mut rows = self.execute_logical(input)?;
+                let idx = column.as_bytes();
+                let col_idx = (idx.first().copied().unwrap_or(b'a') - b'a') as usize;
+                rows.sort_by(|a, b| {
+                    let av = a.get(col_idx).cloned().unwrap_or(Value::Null);
+                    let bv = b.get(col_idx).cloned().unwrap_or(Value::Null);
+                    let ord = av.partial_cmp(&bv).unwrap_or(std::cmp::Ordering::Equal);
+                    if *desc { ord.reverse() } else { ord }
+                });
+                Ok(rows)
+            }
             _ => Err(Error::Execution("unsupported logical plan".into())),
         }
     }

@@ -19,6 +19,7 @@ pub enum Statement {
         where_clause: Option<Expr>,
         limit: Option<u64>,
         offset: Option<u64>,
+        order_by: Option<(String, bool)>,
     },
     Update {
         table: String,
