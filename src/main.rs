@@ -86,4 +86,15 @@ mod tests {
         let rows = db.execute("SELECT * FROM t;").unwrap();
         assert_eq!(rows.len(), 1);
     }
+
+    #[test]
+    fn smoke_select_with_limit_and_offset() {
+        let db = Database::new_in_memory().unwrap();
+        assert!(db.execute("CREATE TABLE t (id INT);").is_ok());
+        for i in 0..10 {
+            assert!(db.execute(&format!("INSERT INTO t VALUES ({i});")).is_ok());
+        }
+        let rows = db.execute("SELECT * FROM t LIMIT 3 OFFSET 2;").unwrap();
+        assert_eq!(rows.len(), 3);
+    }
 }

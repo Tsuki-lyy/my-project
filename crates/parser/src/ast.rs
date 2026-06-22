@@ -17,6 +17,8 @@ pub enum Statement {
     Select {
         table: String,
         where_clause: Option<Expr>,
+        limit: Option<u64>,
+        offset: Option<u64>,
     },
     Update {
         table: String,
