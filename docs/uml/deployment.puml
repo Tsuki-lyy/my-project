@@ -1,0 +1,15 @@
+@startuml deployment
+node "Windows / Linux / macOS" as OS {
+  node "rustc 1.93" as RUST {
+    artifact "sqlrustgo.exe" as BIN
+  }
+}
+
+node "内存" as MEM {
+  database "Tables (HashMap)" as TABLES
+  database "Catalog (HashMap)" as CAT
+}
+
+BIN ..> TABLES : RwLock
+BIN ..> CAT : RwLock
+@enduml

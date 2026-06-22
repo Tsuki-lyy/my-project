@@ -1,0 +1,32 @@
+@startuml use-case
+left to right direction
+skinparam packageStyle rectangle
+
+actor User
+actor Admin
+actor TestRunner
+
+rectangle SQLRustGo {
+  usecase "UC1 建表" as UC1
+  usecase "UC2 删表" as UC2
+  usecase "UC3 插入数据" as UC3
+  usecase "UC4 查询数据" as UC4
+  usecase "UC5 更新数据" as UC5
+  usecase "UC6 删除数据" as UC6
+  usecase "UC7 批量执行" as UC7
+  usecase "UC8 跑测试" as UC8
+  usecase "UC9 查看 schema" as UC9
+}
+
+User --> UC1
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+Admin --> UC1
+Admin --> UC2
+Admin --> UC9
+TestRunner --> UC7
+TestRunner --> UC8
+UC7 ..> UC4 : <<extends>>
+@enduml

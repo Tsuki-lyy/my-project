@@ -1,0 +1,74 @@
+@startuml class
+skinparam classAttributeIconSize 0
+
+class Database {
+  - executor: Box<Executor>
+  + new_in_memory() Result<Database>
+  + execute(sql: &str) Result<Vec<Vec<Value>>>
+}
+
+class Parser {
+  - tokens: Vec<Token>
+  - pos: usize
+  + new(sql: &str) Parser
+  + parse() Result<Statement>
+}
+
+class Lexer {
+  - input: &[u8]
+  - pos: usize
+  + new(input: &str) Lexer
+  + tokenize() Result<Vec<Token>>
+}
+
+class Planner {
+  + new() Planner
+  + plan(stmt: Statement) Result<PhysicalPlan>
+}
+
+class Executor {
+  - storage: Box<dyn StorageEngine>
+  - catalog: Box<Catalog>
+  + new(s, c) Executor
+  + execute(plan) Result
+}
+
+interface StorageEngine {
+  + create_table()
+  + drop_table()
+  + insert()
+  + scan()
+  + update()
+  + delete()
+}
+
+class MemoryStorage {
+  - tables: RwLock<HashMap>
+}
+
+class Catalog {
+  - tables: RwLock<HashMap>
+  + create_table()
+  + drop_table()
+  + table() Option
+}
+
+enum Statement <<enumeration>> {
+  CreateTable
+  DropTable
+  Insert
+  Select
+  Update
+  Delete
+}
+
+Database --> Executor
+Database ..> Parser
+Database ..> Planner
+Parser ..> Lexer
+Parser ..> Statement
+Planner ..> Statement
+Executor --> StorageEngine
+Executor --> Catalog
+StorageEngine <|.. MemoryStorage
+@enduml

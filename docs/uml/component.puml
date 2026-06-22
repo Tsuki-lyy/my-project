@@ -1,0 +1,44 @@
+@startuml component
+package "sqlrustgo (root)" {
+  [bin sqlrustgo] as BIN
+}
+
+package "common" {
+  [Value/Error/Result] as COM
+}
+
+package "parser" {
+  [Lexer+Parser+AST] as PAR
+}
+
+package "planner" {
+  [Logical+Physical+Planner] as PLN
+}
+
+package "storage" {
+  interface "StorageEngine" as IF
+  [MemoryStorage] as MEM
+}
+
+package "catalog" {
+  [Catalog] as CAT
+}
+
+package "executor" {
+  [Operator+Executor] as EXE
+}
+
+BIN --> COM
+BIN --> PAR
+BIN --> PLN
+BIN --> EXE
+PAR --> COM
+PLN --> COM
+PLN --> PAR
+EXE --> COM
+EXE --> PAR
+EXE --> PLN
+EXE --> IF
+EXE --> CAT
+MEM ..|> IF
+@enduml

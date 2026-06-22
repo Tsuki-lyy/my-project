@@ -1,0 +1,13 @@
+@startuml state
+[*] --> Tokenized
+Tokenized --> Parsed: parse() Ok
+Tokenized --> LexError: lex fail
+LexError --> [*]
+Parsed --> Planned: plan() Ok
+Parsed --> ParseError: parse fail
+ParseError --> [*]
+Planned --> Executed: execute() Ok
+Planned --> SemanticError: catalog fail
+SemanticError --> [*]
+Executed --> [*]
+@enduml

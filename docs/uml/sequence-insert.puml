@@ -1,0 +1,19 @@
+@startuml sequence-insert
+actor User
+participant Database as DB
+participant Parser as P
+participant Planner as PL
+participant Executor as E
+participant Storage as S
+
+User -> DB: execute("INSERT INTO users VALUES (1, 'Alice', 25)")
+DB -> P: parse()
+P --> DB: Statement::Insert
+DB -> PL: plan(stmt)
+PL --> DB: PhysicalPlan::Insert
+DB -> E: execute(plan)
+E -> S: insert(table, values)
+S --> E: Ok
+E --> DB: []
+DB --> User: success
+@enduml

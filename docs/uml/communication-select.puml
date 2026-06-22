@@ -1,0 +1,23 @@
+@startuml communication-select
+title SELECT 协作图
+actor U as "User"
+participant D as "Database"
+participant P as "Parser"
+participant L as "Lexer"
+participant PL as "Planner"
+participant E as "Executor"
+participant S as "Storage"
+
+U -> D: 1. execute(sql)
+D -> P: 2. parse()
+P -> L: 3. tokenize()
+L --> P: 4. tokens
+P --> D: 5. Statement
+D -> PL: 6. plan(stmt)
+PL --> D: 7. Plan
+D -> E: 8. execute(plan)
+E -> S: 9. scan(table)
+S --> E: 10. rows
+E --> D: 11. result
+D --> U: 12. result
+@enduml

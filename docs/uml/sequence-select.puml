@@ -1,0 +1,23 @@
+@startuml sequence-select
+actor User
+participant Database as DB
+participant Parser as P
+participant Lexer as L
+participant Planner as PL
+participant Executor as E
+participant Storage as S
+
+User -> DB: execute("SELECT * FROM users WHERE age > 18")
+DB -> P: parse()
+P -> L: tokenize()
+L --> P: tokens
+P --> DB: Statement::Select
+DB -> PL: plan(stmt)
+PL --> DB: PhysicalPlan::Project(Scan)
+DB -> E: execute(plan)
+E -> S: scan("users")
+S --> E: rows
+E -> E: filter
+E --> DB: result
+DB --> User: result
+@enduml

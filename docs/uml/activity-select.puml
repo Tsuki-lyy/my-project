@@ -1,0 +1,24 @@
+@startuml activity-select
+|User|
+start
+:submit SQL;
+|Database|
+:Lexer.tokenize;
+if (tokenize ok?) then (yes)
+  :Parser.parse;
+  if (parse ok?) then (yes)
+    :Planner.plan;
+    if (plan ok?) then (yes)
+      :Executor.execute;
+      :return result;
+    else (no)
+      :return SemanticError;
+    endif
+  else (no)
+    :return ParseError;
+  endif
+else (no)
+  :return LexError;
+endif
+stop
+@enduml

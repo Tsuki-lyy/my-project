@@ -1,0 +1,33 @@
+@startuml object
+object db:Database
+object parser:Parser
+object lexer:Lexer
+object planner:Planner
+object exec:Executor
+object storage:MemoryStorage
+object catalog:Catalog
+
+object tok1:Token(SELECT)
+object tok2:Token(*)
+object tok3:Token(FROM)
+object tok4:Token(users)
+object tok5:Token(WHERE)
+object tok6:Token(age)
+object tok7:Token(>)
+object tok8:Token(18)
+
+db --> exec
+db --> parser
+db --> planner
+exec --> storage
+exec --> catalog
+parser --> lexer
+
+tok1 --> tok2
+tok2 --> tok3
+tok3 --> tok4
+tok4 --> tok5
+tok5 --> tok6
+tok6 --> tok7
+tok7 --> tok8
+@enduml
