@@ -1,0 +1,15 @@
+[package]
+name = "sqlrustgo-executor"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SQLRustGo 执行引擎"
+
+[dependencies]
+sqlrustgo-common = { path = "../common" }
+sqlrustgo-parser = { path = "../parser" }
+sqlrustgo-planner = { path = "../planner" }
+sqlrustgo-storage = { path = "../storage" }
+sqlrustgo-catalog = { path = "../catalog" }

@@ -1,0 +1,11 @@
+[package]
+name = "sqlrustgo-common"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SQLRustGo 公共类型与错误"
+
+[dependencies]
+thiserror = { workspace = true }

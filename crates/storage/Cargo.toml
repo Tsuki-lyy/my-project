@@ -1,0 +1,12 @@
+[package]
+name = "sqlrustgo-storage"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SQLRustGo 存储引擎"
+
+[dependencies]
+sqlrustgo-common = { path = "../common" }
+sqlrustgo-parser = { path = "../parser" }

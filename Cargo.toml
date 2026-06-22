@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/parser",
+    "crates/planner",
+    "crates/executor",
+    "crates/storage",
+    "crates/catalog",
+    "crates/common",
+]
+
+[workspace.package]
+version = "0.1.0-alpha"
+edition = "2021"
+authors = ["Tsuki-lyy <287972628@qq.com>"]
+license = "MIT"
+repository = "https://github.com/Tsuki-lyy/sqlrustgo"
+
+[workspace.dependencies]
+# 内部 crate 共享依赖
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+
+# ---------------- root crate (CLI / driver) ----------------
+[package]
+name = "sqlrustgo"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SQLRustGo - a relational database prototype in Rust (AI-enhanced SE course lab)"
+
+[[bin]]
+name = "sqlrustgo"
+path = "src/main.rs"
+
+[dependencies]
+sqlrustgo-common = { path = "crates/common" }
+sqlrustgo-parser = { path = "crates/parser" }
+sqlrustgo-planner = { path = "crates/planner" }
+sqlrustgo-executor = { path = "crates/executor" }
+sqlrustgo-storage = { path = "crates/storage" }
+sqlrustgo-catalog = { path = "crates/catalog" }
