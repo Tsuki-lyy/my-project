@@ -42,6 +42,11 @@ pub enum LogicalPlan {
         limit: u64,
         offset: u64,
     },
+    OrderBy {
+        input: Box<LogicalPlan>,
+        column: String,
+        desc: bool,
+    },
 }
 
 pub struct Planner;
@@ -70,11 +75,20 @@ impl Planner {
                 where_clause,
                 limit,
                 offset,
+                order_by,
             } => {
                 let mut plan = LogicalPlan::Scan {
                     table,
                     filter: where_clause,
                 };
+                if order_by.is_some() {
+                    let (col, desc) = order_by.unwrap();
+                    plan = LogicalPlan::OrderBy {
+                        input: Box::new(plan),
+                        column: col,
+                        desc,
+                    };
+                }
                 if limit.is_some() || offset.is_some() {
                     plan = LogicalPlan::Limit {
                         input: Box::new(plan),

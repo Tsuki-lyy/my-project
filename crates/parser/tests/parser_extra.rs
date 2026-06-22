@@ -44,11 +44,13 @@ fn parse_select_with_where_and_comparison() {
             where_clause,
             limit,
             offset,
+            order_by,
         } => {
             assert_eq!(table, "users");
             assert!(where_clause.is_some());
             assert!(limit.is_none());
             assert!(offset.is_none());
+            assert!(order_by.is_none());
         }
         _ => panic!("expected Select"),
     }
@@ -88,6 +90,30 @@ fn parse_select_with_offset_only() {
         Statement::Select { limit, offset, .. } => {
             assert_eq!(limit, None);
             assert_eq!(offset, Some(5));
+        }
+        _ => panic!("expected Select"),
+    }
+}
+
+#[test]
+fn parse_select_with_order_by_asc() {
+    let mut p = Parser::new("SELECT * FROM users ORDER BY name ASC;");
+    let s = p.parse().expect("parse");
+    match s {
+        Statement::Select { order_by, .. } => {
+            assert_eq!(order_by, Some(("name".to_string(), false)));
+        }
+        _ => panic!("expected Select"),
+    }
+}
+
+#[test]
+fn parse_select_with_order_by_desc() {
+    let mut p = Parser::new("SELECT * FROM users ORDER BY age DESC;");
+    let s = p.parse().expect("parse");
+    match s {
+        Statement::Select { order_by, .. } => {
+            assert_eq!(order_by, Some(("age".to_string(), true)));
         }
         _ => panic!("expected Select"),
     }

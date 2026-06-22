@@ -122,12 +122,31 @@ impl Parser {
             self.pos += 1;
             offset = Some(self.expect_u64()?);
         }
+        // 可选 ORDER BY column [ASC|DESC]
+        let order_by = if matches!(self.peek_kind(), TokenKind::Keyword(Keyword::Order)) {
+            self.pos += 1;
+            self.expect_keyword(Keyword::By)?;
+            let col = self.expect_ident()?;
+            let desc = if matches!(self.peek_kind(), TokenKind::Keyword(Keyword::Desc)) {
+                self.pos += 1;
+                true
+            } else {
+                if matches!(self.peek_kind(), TokenKind::Keyword(Keyword::Asc)) {
+                    self.pos += 1;
+                }
+                false
+            };
+            Some((col, desc))
+        } else {
+            None
+        };
         self.consume_optional_semicolon();
         Ok(Statement::Select {
             table,
             where_clause,
             limit,
             offset,
+            order_by,
         })
     }
 
@@ -362,11 +381,13 @@ mod tests {
                 where_clause,
                 limit,
                 offset,
+                order_by,
             } => {
                 assert_eq!(table, "users");
                 assert!(where_clause.is_some());
                 assert!(limit.is_none());
                 assert!(offset.is_none());
+                assert!(order_by.is_none());
             }
             _ => panic!("wrong stmt"),
         }
