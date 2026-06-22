@@ -92,7 +92,11 @@ impl Executor {
                     let av = a.get(col_idx).cloned().unwrap_or(Value::Null);
                     let bv = b.get(col_idx).cloned().unwrap_or(Value::Null);
                     let ord = av.partial_cmp(&bv).unwrap_or(std::cmp::Ordering::Equal);
-                    if *desc { ord.reverse() } else { ord }
+                    if *desc {
+                        ord.reverse()
+                    } else {
+                        ord
+                    }
                 });
                 Ok(rows)
             }

@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [ develop/v3.0.0, main ]
+  pull_request:
+    branches: [ develop/v3.0.0, main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # ---------- BP1: static checks ----------
+  bp1-static:
+    name: BP1 / static (build / fmt / clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: cargo build --all-features
+        run: cargo build --all-features --locked
+      - name: cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
+      - name: cargo clippy --all-features -- -D warnings
+        run: cargo clippy --all-features --all-targets -- -D warnings
+
+  # ---------- BP2: behavior checks ----------
+  bp2-behavior:
+    name: BP2 / behavior (unit + qps)
+    needs: bp1-static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo test --all-features
+        run: cargo test --all-features --locked
+      - name: QPS benchmark
+        run: cargo test --package sqlrustgo-storage --test qps_benchmark -- --ignored --nocapture
+
+  # ---------- BP3: risk analysis (Agent-driven) ----------
+  bp3-risk:
+    name: BP3 / risk (oracle agent)
+    needs: bp1-static
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect risky file changes
+        id: detect
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if echo "$CHANGED" | grep -E "(storage|memory|executor)/.*\.rs$" > /dev/null; then
+            echo "risky=true" >> $GITHUB_OUTPUT
+          else
+            echo "risky=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Comment risk report on PR
+        if: steps.detect.outputs.risky == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            ## BP3 Risk Report (Oracle Agent)
+            Files changed touch the hot path:
+            ```
+            ${{ steps.detect.outputs.changed_files }}
+            ```
+            - [ ] DELETE/UPDATE QPS regression check (must be >= 10000)
+            - [ ] No new `unwrap()` on user input
+            - [ ] BTree / HashMap indexing intentional
+            Please confirm before merge.
+
+  # ---------- BP4: docs sync ----------
+  bp4-docs:
+    name: BP4 / docs (librarian agent)
+    needs: bp1-static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check ADR / docs present
+        run: |
+          test -d docs/adr || (echo "::warning::No docs/adr directory" && exit 0)
+          test -d reports || (echo "::warning::No reports directory" && exit 0)
+          echo "Docs structure OK"

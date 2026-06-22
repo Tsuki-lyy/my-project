@@ -81,8 +81,7 @@ impl Planner {
                     table,
                     filter: where_clause,
                 };
-                if order_by.is_some() {
-                    let (col, desc) = order_by.unwrap();
+                if let Some((col, desc)) = order_by {
                     plan = LogicalPlan::OrderBy {
                         input: Box::new(plan),
                         column: col,

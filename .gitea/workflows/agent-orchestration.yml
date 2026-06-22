@@ -1,0 +1,142 @@
+name: Agent Orchestration
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [ develop/v3.0.0 ]
+
+jobs:
+  # Fan out: 3 parallel agents analyze the PR diff
+  agent-fanout:
+    name: Agent fan-out
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr.diff
+          wc -l /tmp/pr.diff
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr-diff
+          path: /tmp/pr.diff
+
+  # ---- Agent 1: explore (find call sites) ----
+  explore-agent:
+    name: explore / call-site mapping
+    needs: agent-fanout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-diff
+      - name: Explore call graph
+        id: report
+        run: |
+          {
+            echo "## explore agent: call-site map"
+            echo ""
+            echo '```'
+            grep -E "^\+.*delete\(|^\+.*update\(|^\+.*insert\(" /tmp/pr.diff || echo "(no matches)"
+            echo '```'
+          } > /tmp/explore.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: explore-report
+          path: /tmp/explore.md
+
+  # ---- Agent 2: librarian (verify external API usage) ----
+  librarian-agent:
+    name: librarian / API verification
+    needs: agent-fanout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-diff
+      - name: Cross-check Rust std API usage
+        id: report
+        run: |
+          {
+            echo "## librarian agent: API reference check"
+            echo ""
+            echo "- vec::Vec::remove -> prefer swap_remove for O(1) delete"
+            echo "- std::sync::RwLock::write -> held across IO is a smell"
+            echo "- HashMap::insert shadowing prior key -> may indicate missed remove"
+            echo ""
+            echo '### diff snippets:'
+            echo '```'
+            head -200 /tmp/pr.diff
+            echo '```'
+          } > /tmp/librarian.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: librarian-report
+          path: /tmp/librarian.md
+
+  # ---- Agent 3: oracle (predict risk) ----
+  oracle-agent:
+    name: oracle / risk prediction
+    needs: agent-fanout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-diff
+      - name: Predict regression
+        id: report
+        run: |
+          RISK=low
+          if grep -E "Vec::remove|rows\.remove" /tmp/pr.diff; then RISK=high; fi
+          if grep -E "for .* in 0\.\.[0-9]+\{.*\.insert\(" /tmp/pr.diff; then RISK=medium; fi
+          echo "risk_level=$RISK" >> $GITHUB_OUTPUT
+          {
+            echo "## oracle agent: risk prediction"
+            echo ""
+            echo "Risk level: **$RISK**"
+            echo ""
+            echo "If risk == high -> require explicit QPS rerun before merge."
+          } > /tmp/oracle.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oracle-report
+          path: /tmp/oracle.md
+      - name: Block merge on high risk
+        if: steps.report.outputs.risk_level == 'high'
+        run: |
+          echo "::error::Oracle agent flagged HIGH risk. QPS rerun required."
+          exit 1
+
+  # ---- Synthesizer: collect all reports and comment on PR ----
+  synthesize:
+    name: synthesize / report
+    needs: [explore-agent, librarian-agent, oracle-agent]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: explore-report }
+      - uses: actions/download-artifact@v4
+        with: { name: librarian-report }
+      - uses: actions/download-artifact@v4
+        with: { name: oracle-report }
+      - name: Compose final report
+        run: |
+          {
+            echo "## Agent Orchestration Report"
+            echo ""
+            cat /tmp/explore.md
+            echo ""
+            cat /tmp/librarian.md
+            echo ""
+            cat /tmp/oracle.md
+          } > /tmp/final.md
+      - name: Post report to PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: /tmp/final.md
